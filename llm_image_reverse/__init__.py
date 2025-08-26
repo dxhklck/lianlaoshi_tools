@@ -1,0 +1,27 @@
+from .image_reverse_node import NODE_CLASS_MAPPINGS as LLM_IMAGE_REVERSE_NODE_CLASS_MAPPINGS
+from .image_reverse_node import NODE_DISPLAY_NAME_MAPPINGS as LLM_IMAGE_REVERSE_NODE_DISPLAY_NAME_MAPPINGS
+from .video_prompt_optimizer import VideoPromptOptimizerNode
+from .video_prompt_optimizer import get_node_registrations as video_optimizer_registrations
+
+# 合并视频优化节点的注册信息
+video_optimizer_nodes = video_optimizer_registrations()
+VIDEO_OPTIMIZER_NODE_CLASS_MAPPINGS = video_optimizer_nodes["node_class_mappings"]
+VIDEO_OPTIMIZER_NODE_DISPLAY_NAME_MAPPINGS = video_optimizer_nodes["node_display_name_mappings"]
+
+# 合并所有节点映射
+ALL_NODE_CLASS_MAPPINGS = {}
+ALL_NODE_CLASS_MAPPINGS.update(LLM_IMAGE_REVERSE_NODE_CLASS_MAPPINGS)
+ALL_NODE_CLASS_MAPPINGS.update(VIDEO_OPTIMIZER_NODE_CLASS_MAPPINGS)
+
+ALL_NODE_DISPLAY_NAME_MAPPINGS = {}
+ALL_NODE_DISPLAY_NAME_MAPPINGS.update(LLM_IMAGE_REVERSE_NODE_DISPLAY_NAME_MAPPINGS)
+ALL_NODE_DISPLAY_NAME_MAPPINGS.update(VIDEO_OPTIMIZER_NODE_DISPLAY_NAME_MAPPINGS)
+
+__all__ = (
+    "LLM_IMAGE_REVERSE_NODE_CLASS_MAPPINGS",
+    "LLM_IMAGE_REVERSE_NODE_DISPLAY_NAME_MAPPINGS",
+    "VIDEO_OPTIMIZER_NODE_CLASS_MAPPINGS",
+    "VIDEO_OPTIMIZER_NODE_DISPLAY_NAME_MAPPINGS",
+    "ALL_NODE_CLASS_MAPPINGS",
+    "ALL_NODE_DISPLAY_NAME_MAPPINGS"
+)
