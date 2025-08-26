@@ -6,23 +6,23 @@
 
 - **图像内容反推**：使用GLM视觉大模型分析图像内容，生成详细描述，可以描述不生成的提示词。
 
-  ![](.\image\image.jpg)
+  ![](image/image.jpg)
 
 - **视频/图片提示词优化**：根据专业格式自动扩写和优化提示词（有选wan视频和千问图片选项）
 
-  ![](./image/ai.jpg)
+  ![](image/ai.jpg)
 
 - **API密钥管理**：便捷地保存和管理GLM模型API密钥
 
-  ![](./image/api_key.jpg)
+  ![](image/api_key.jpg)
 
 - **图像拼接**：将多个图像按指定网格排列拼接成大图
 
-  ![](./image/row.jpg)
+  ![](image/row.jpg)
 
 - **提示词构建**：通过结构化参数快速生成专业提示词
 
-  ![](./image/pro.jpg)
+  ![](image/pro.jpg)
 
 ## 📋 系统要求
 
