@@ -150,5 +150,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "PromptExpansion": "lian wan2.2 提示词助手 微机练老师"
+    "PromptExpansion": "lian 提示词助手 微机练老师"
 }

@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class VideoPromptOptimizerNode:
-    """通义万相视频提示词优化节点"""
+    """通义万相视频/图片提示词优化节点"""
     def __init__(self):
         pass
 
@@ -30,9 +30,8 @@ class VideoPromptOptimizerNode:
                 }),
             },
             "optional": {
-                "model_name": ("STRING", {
-                    "default": "",
-                    "placeholder": "输入模型名称，如glm-4v"
+                "model_name": (["auto", "glm-4v", "glm-4.5v", "glm-4.5", "glm-4.5-flash"], {
+                    "default": "auto"
                 }),
                 "temperature": ("FLOAT", {
                     "default": 0.7,
@@ -51,18 +50,42 @@ class VideoPromptOptimizerNode:
                     "max": 2.0,
                     "step": 0.1
                 }),
+                "optimization_type": (["video", "image"], {
+                    "default": "video",
+                    "label": "优化类型（视频/图片）"
+                }),
+                "seed": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 999999999,
+                    "step": 1,
+                    "label": "随机种子（0表示随机）"
+                }),
             }
         }
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("optimized_prompt",)
-    FUNCTION = "optimize_prompt"
+    FUNCTION = "run"
     CATEGORY = "lianlaoshi"
     OUTPUT_NODE = True
 
-    def optimize_prompt(self, input_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, optimization_strength=1.0):
+    def run(self, input_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, optimization_strength=1.0, optimization_type="video", seed=0):
+        return self.optimize_prompt(
+            input_prompt=input_prompt,
+            model_type=model_type,
+            api_key=api_key,
+            model_name=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            optimization_strength=optimization_strength,
+            optimization_type=optimization_type,
+            seed=seed
+        )
+    
+    def optimize_prompt(self, input_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, optimization_strength=1.0, optimization_type="video", seed=0):
         """
-        根据通义万相视频提示词格式优化和扩写输入提示词
+        根据类型（视频或图片）优化和扩写输入提示词
         :param input_prompt: 需要优化的提示词
         :param model_type: 模型类型
         :param api_key: API密钥
@@ -70,7 +93,8 @@ class VideoPromptOptimizerNode:
         :param temperature: 温度参数
         :param max_tokens: 最大tokens
         :param optimization_strength: 优化强度 (0.5-2.0)
-        :return: 优化后的通义万相视频提示词
+        :param optimization_type: 优化类型（video或image）
+        :return: 优化后的提示词
         """
         try:
             # 验证输入
@@ -86,7 +110,19 @@ class VideoPromptOptimizerNode:
                 "temperature": temperature,
                 "max_tokens": max_tokens
             }
-            if model_name:
+            
+            # 如果seed大于0，则添加到参数中
+            if seed > 0:
+                kwargs["seed"] = seed
+                logger.info(f"使用种子参数: {seed}")
+            
+            # 如果用户未指定模型或选择了"auto"，则自动选择最快的模型
+            if model_name == "auto" or not model_name:
+                # 视频提示词优化是纯文本任务，推荐使用最快的文本模型
+                suggested_model = client.suggest_fast_model(has_image=False)
+                kwargs["model"] = suggested_model
+                logger.info(f"自动选择最快模型: {suggested_model}")
+            else:
                 kwargs["model"] = model_name
 
             # 设置扩写强度描述
@@ -96,29 +132,53 @@ class VideoPromptOptimizerNode:
             elif optimization_strength > 1.5:
                 strength_desc = "高度"
 
-            # 构建优化提示 - 严格按照指定的六要素结构
-            prompt = f"""
-            你是一个专业的视频脚本和提示词生成助手。请根据用户提供的核心概念，将其扩写成一个详细、具体、富有画面感的视频生成提示词。
-            
-            输入核心概念：{input_prompt}
-            
-            请严格遵循以下结构进行扩写：
-            1. 主体描述：详细刻画视频中的主要对象或人物的外观、特征、状态
-            2. 场景描述：细致描绘主体所处环境，包括时间、地点、背景元素、光线、天气等
-            3. 运动描述：明确主体的动作细节（幅度、速率、效果）
-            4. 镜头语言：指定景别（如特写、近景、中景、全景）、视角（如平视、仰视、俯视）、镜头类型（如广角、长焦）、运镜方式（如推、拉、摇、移、跟、升、降）
-            5. 氛围词：定义画面的情感与气氛
-            6. 风格化：设定画面的艺术风格（如写实、卡通、赛博朋克、水墨画、电影感、抽象）
-            
-            输出要求：
-            - 将所有要素融合为一段连贯的描述性文字，确保逻辑流畅
-            - 最终提示词应该尽可能详细，包含丰富的细节
-            - 只输出最终扩写后的视频提示词，不要包含任何解释性文字、对话或前缀
-            - 不要添加类似"以下是根据您提供的信息生成的视频提示词："这样的开头文本
-            - 按照{strength_desc}扩写强度进行扩展，保持核心意图
-            - 语言风格自然流畅，富有画面感
-            - 请直接输出优化后的提示词内容，不要添加任何额外说明
-            """
+            # 根据优化类型选择不同的提示词模板
+            if optimization_type == "image":
+                # 图片提示词模板 - 基于千问生图的特性
+                prompt = f"""
+                你是一个专业的图像提示词生成助手。请根据用户提供的核心概念，将其扩写成一个详细、具体、富有画面感的图像生成提示词。
+                输入核心概念：{input_prompt}
+                
+                请严格遵循以下结构进行扩写：
+                1. 主体描述：明确图像中的核心对象（人物/物体/场景）
+                2. 细节刻画：详细描述外观特征、材质、颜色、神态/动作等
+                3. 场景与环境：描绘主体所处背景和环境氛围
+                4. 构图与视角：指定景别、视角、镜头效果
+                5. 艺术风格：设定图像的艺术风格
+                6. 画质与效果：描述画质和光线效果
+                
+                输出要求：
+                - 将所有要素融合为一段连贯的描述性文字，确保逻辑流畅
+                - 最终提示词应该尽可能详细，包含丰富的细节
+                - 只输出最终扩写后的图像提示词，不要包含任何解释性文字、对话或前缀
+                - 不要添加类似"以下是根据您提供的信息生成的图像提示词："这样的开头文本
+                - 按照{strength_desc}扩写强度进行扩展，保持核心意图
+                - 语言风格自然流畅，富有画面感
+                - 请直接输出优化后的提示词内容，不要添加任何额外说明
+                """
+            else:
+                # 视频提示词模板
+                prompt = f"""
+                你是一个专业的视频脚本和提示词生成助手。请根据用户提供的核心概念，将其扩写成一个详细、具体、富有画面感的视频生成提示词。            
+                输入核心概念：{input_prompt}
+                
+                请严格遵循以下结构进行扩写：
+                1. 主体描述：详细刻画视频中的主要对象或人物的外观、特征、状态
+                2. 场景描述：细致描绘主体所处环境，包括时间、地点、背景元素、光线、天气等
+                3. 运动描述：明确主体的动作细节（幅度、速率、效果）
+                4. 镜头语言：指定景别（如特写、近景、中景、全景）、视角（如平视、仰视、俯视）、镜头类型（如广角、长焦）、运镜方式（如推、拉、摇、移、跟、升、降）
+                5. 氛围词：定义画面的情感与气氛
+                6. 风格化：设定画面的艺术风格（如写实、卡通、赛博朋克、水墨画、电影感、抽象）
+                
+                输出要求：
+                - 将所有要素融合为一段连贯的描述性文字，确保逻辑流畅
+                - 最终提示词应该尽可能详细，包含丰富的细节
+                - 只输出最终扩写后的视频提示词，不要包含任何解释性文字、对话或前缀
+                - 不要添加类似"以下是根据您提供的信息生成的视频提示词："这样的开头文本
+                - 按照{strength_desc}扩写强度进行扩展，保持核心意图
+                - 语言风格自然流畅，富有画面感
+                - 请直接输出优化后的提示词内容，不要添加任何额外说明
+                """
 
             # 获取优化后的提示词
             optimized_prompt = client.generate(
@@ -127,7 +187,10 @@ class VideoPromptOptimizerNode:
             )
 
             if optimized_prompt:
-                logger.info("通义万相视频提示词优化成功")
+                if optimization_type == "image":
+                    logger.info("图像提示词优化成功")
+                else:
+                    logger.info("通义万相视频提示词优化成功")
                 # 清理GLM模型可能返回的额外前缀文本
                 cleaned_prompt = optimized_prompt.strip()
                 
@@ -150,7 +213,10 @@ class VideoPromptOptimizerNode:
                 # 确保只返回提示词内容，去除可能的额外解释
                 return (cleaned_prompt,)
             else:
-                logger.error("通义万相视频提示词优化失败")
+                if optimization_type == "image":
+                    logger.error("图像提示词优化失败")
+                else:
+                    logger.error("通义万相视频提示词优化失败")
                 return ("",)
 
         except Exception as e:
@@ -164,6 +230,6 @@ def get_node_registrations():
             "VideoPromptOptimizerNode": VideoPromptOptimizerNode
         },
         "node_display_name_mappings": {
-            "VideoPromptOptimizerNode": "lian 视频提示词优化节点"
+            "VideoPromptOptimizerNode": "lian 视频、图片提示词优化节点"
         }
     }

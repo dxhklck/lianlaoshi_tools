@@ -26,6 +26,13 @@ class ImageToLLMReverseNode:
                     "default": "请描述这张图像的内容，并根据图像生成详细的提示词。",
                     "placeholder": "输入反推要求"
                 }),
+                "seed": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 999999999,
+                    "step": 1,
+                    "label": "随机种子（0表示随机）"
+                }),
                 "model_type": (["glm"], {
                     "default": "glm"
                 }),
@@ -36,9 +43,8 @@ class ImageToLLMReverseNode:
                 }),
             },
             "optional": {
-                "model_name": ("STRING", {
-                    "default": "",
-                    "placeholder": "输入模型名称，如glm-4v"
+                "model_name": (["auto", "glm-4v", "glm-4.5v"], {
+                    "default": "auto"
                 }),
                 "temperature": ("FLOAT", {
                     "default": 0.7,
@@ -59,7 +65,7 @@ class ImageToLLMReverseNode:
     CATEGORY = "lianlaoshi"
     OUTPUT_NODE = True
 
-    def reverse_image(self, images, reverse_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048):
+    def reverse_image(self, images, reverse_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, seed=0):
         """
         图像反推功能
         :param images: 输入图像
@@ -93,7 +99,19 @@ class ImageToLLMReverseNode:
                 "temperature": temperature,
                 "max_tokens": max_tokens
             }
-            if model_name:
+            
+            # 如果seed大于0，则添加到参数中
+            if seed > 0:
+                kwargs["seed"] = seed
+                logger.info(f"使用种子参数: {seed}")
+            
+            # 如果用户未指定模型或选择了"auto"，则自动选择最快的模型
+            if model_name == "auto" or not model_name:
+                # 图像反推任务包含图像输入，需要选择支持图像的最快模型
+                suggested_model = client.suggest_fast_model(has_image=True)
+                kwargs["model"] = suggested_model
+                logger.info(f"自动选择最快模型: {suggested_model}")
+            else:
                 kwargs["model"] = model_name
 
             # 发送请求进行图像反推
