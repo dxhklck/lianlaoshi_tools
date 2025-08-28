@@ -64,8 +64,8 @@ class VideoPromptOptimizerNode:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("optimized_prompt",)
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("optimized_prompt", "api_key")
     FUNCTION = "run"
     CATEGORY = "lianlaoshi"
     OUTPUT_NODE = True
@@ -104,6 +104,9 @@ class VideoPromptOptimizerNode:
 
             # 初始化LLM客户端 - 如果API密钥为空，将自动从配置中获取
             client = LLMClient(model_type=model_type, api_key=api_key)
+            
+            # 使用用户输入的API密钥（如果有输入）
+            output_api_key = api_key
 
             # 准备参数
             kwargs = {
@@ -211,17 +214,18 @@ class VideoPromptOptimizerNode:
                         break  # 移除第一个匹配的前缀后停止
                 
                 # 确保只返回提示词内容，去除可能的额外解释
-                return (cleaned_prompt,)
+                return (cleaned_prompt, output_api_key)
             else:
                 if optimization_type == "image":
                     logger.error("图像提示词优化失败")
                 else:
                     logger.error("通义万相视频提示词优化失败")
-                return ("",)
+                return ("", output_api_key)
 
         except Exception as e:
             logger.error(f"通义万相视频提示词优化过程中发生错误: {e}")
-            return ("",)
+            # 在异常情况下，仍然返回用户输入的API密钥
+            return ("", api_key)
 
 # 节点注册
 def get_node_registrations():

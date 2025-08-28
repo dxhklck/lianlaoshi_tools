@@ -51,7 +51,9 @@ class ConfigManager:
             config = {}
             if self.api_keys_file.exists():
                 with open(self.api_keys_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                    content = f.read().strip()
+                    if content:  # 只有当文件内容非空时才尝试解析JSON
+                        config = json.loads(content)
             
             # 更新API密钥
             config[api_key_type] = api_key

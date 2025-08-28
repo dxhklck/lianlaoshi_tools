@@ -56,7 +56,11 @@
 - **max_tokens**: 最大生成tokens数（影响输出长度）
 - **seed**: 随机种子（0表示随机，>0时可复现结果）
 
-**使用场景**：分析图像内容、生成图像描述、辅助提示词创作
+**输出说明**：
+- **result**: 模型生成的图像分析结果文本
+- **api_key**: 用户在节点中输入的API密钥值（如果有输入），可连接到LLMAPIKeyManager节点进行保存
+
+**使用场景**：分析图像内容、生成图像描述、辅助提示词创作、将输入的API密钥传递给密钥管理节点保存
 
 ### 2. 视频/图片提示词优化节点 (VideoPromptOptimizerNode)
 
@@ -71,6 +75,10 @@
 - **optimization_strength**: 优化强度（0.5-2.0），控制扩写程度
 - **optimization_type**: 优化类型，可选：video（视频）、image（图片）
 
+**输出说明**：
+- **optimized_prompt**: 优化后的提示词文本
+- **api_key**: 用户在节点中输入的API密钥值（如果有输入），可连接到LLMAPIKeyManager节点进行保存
+
 **优化结构**：
 
 - **视频优化**：按照「主体描述 + 场景描述 + 运动描述 + 镜头语言 + 氛围词 + 风格化」六要素结构优化
@@ -78,13 +86,20 @@
 
 **使用场景**：提升提示词质量、标准化创作流程、快速生成专业级提示词
 
-### 3. LLM API密钥管理节点 (LLMAPIKeyManagerNode)
+### 3. LLM API密钥管理节点 (LLMAPIKeyManager)
 
-**功能**：方便地保存和清除GLM API密钥配置。
+**功能**：方便地保存和清除GLM API密钥配置，支持从其他节点读取API密钥值进行保存。
 
 **参数说明**：
-- **api_key**: GLM API密钥
 - **action**: 操作类型，可选：save（保存）、clear（清除）
+- **model_type**: 模型类型（可选，默认：glm）
+- **api_key**: GLM API密钥（直接输入）
+- **api_key_from_node**: 从其他节点传入的API密钥（隐藏端口，用于连接其他节点）
+
+**使用说明**：
+- 可直接输入API密钥并选择"save"操作进行保存
+- 可连接ImageToLLMReverseNode或VideoPromptOptimizerNode的api_key输出到api_key_from_node端口，自动获取密钥值
+- 选择"clear"操作可清除已保存的API密钥
 
 ### 4. 图像拼接节点 (ImageTilingNode)
 
@@ -150,11 +165,19 @@ API密钥存储位置：
 ## 📝 更新日志
 
 - **最新版本**: 
+  
+  - 修改了API_key填写之后，作为输出项连接到密钥保存节点进行保存
+  
+  <img src="image/save_key.jpg" style="zoom:60%;float: left" />
+  
   - 支持图片提示词优化：VideoPromptOptimizerNode新增图片优化模式，支持千问生图格式
+  
   - 增加随机种子参数：支持控制生成内容的可重复性
+  
   - 优化节点结构：简化用户界面，提升操作体验
+  
   - 文档更新：完善使用说明和参数解释
-
+  
 - **历史更新**: 
   - 视频提示词优化升级：支持通义万相专用格式
   - 功能分离：图像反推与提示词优化功能独立为不同节点

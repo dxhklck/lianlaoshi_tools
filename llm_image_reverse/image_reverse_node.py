@@ -60,7 +60,8 @@ class ImageToLLMReverseNode:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("result", "api_key")
     FUNCTION = "reverse_image"
     CATEGORY = "lianlaoshi"
     OUTPUT_NODE = True
@@ -93,6 +94,9 @@ class ImageToLLMReverseNode:
 
             # 初始化LLM客户端 - 如果API密钥为空，将自动从配置中获取
             client = LLMClient(model_type=model_type, api_key=api_key)
+            
+            # 使用用户输入的API密钥（如果有输入）
+            output_api_key = api_key
 
             # 准备参数
             kwargs = {
@@ -123,14 +127,15 @@ class ImageToLLMReverseNode:
 
             if result:
                 logger.info(f"图像反推成功")
-                return (result,)
+                return (result, output_api_key)
             else:
                 logger.error("图像反推失败，未获取到结果")
-                return ("图像反推失败，未获取到结果",)
+                return ("图像反推失败，未获取到结果", output_api_key)
 
         except Exception as e:
             logger.error(f"图像反推过程中发生错误: {e}")
-            return (f"图像反推过程中发生错误: {str(e)}",)
+            # 在异常情况下，仍然返回用户输入的API密钥
+            return (f"图像反推过程中发生错误: {str(e)}", api_key)
 
 class LLMAPIKeyManager:
     """LLM API密钥管理节点"""
@@ -138,9 +143,12 @@ class LLMAPIKeyManager:
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "action": (["save", "clear"], {"default": "save"}),
+            },
+            "optional": {
                 "model_type": (["glm"], {"default": "glm"}),
                 "api_key": ("STRING", {"default": "", "multiline": False, "placeholder": "输入API密钥"}),
-                "action": (["save", "clear"], {"default": "save"}),
+                "api_key_from_node": ("STRING", {"default": "", "hidden": True}),
             },
         }
 
@@ -149,26 +157,36 @@ class LLMAPIKeyManager:
     FUNCTION = "manage_api_key"
     CATEGORY = "lianlaoshi"
 
-    def manage_api_key(self, model_type, api_key, action):
+    def manage_api_key(self, action, model_type="glm", api_key="", api_key_from_node=""):
         """
         管理LLM API密钥
+        :param action: 操作类型，save或clear
+        :param model_type: 模型类型，默认glm
+        :param api_key: 直接输入的API密钥
+        :param api_key_from_node: 从其他节点传入的API密钥
+        :return: 操作状态信息
         """
         try:
             if action == "save":
-                if api_key:
-                    success = config_manager.save_api_key("glm", api_key)
+                # 优先使用从其他节点传入的API密钥
+                key_to_save = api_key_from_node if api_key_from_node else api_key
+                
+                if key_to_save:
+                    # 修复硬编码问题，使用传入的model_type
+                    success = config_manager.save_api_key(model_type, key_to_save)
                     if success:
-                        return ("成功保存GLM API密钥",)
+                        return (f"成功保存{model_type.upper()} API密钥",)
                     else:
-                        return ("保存GLM API密钥失败",)
+                        return (f"保存{model_type.upper()} API密钥失败",)
                 else:
-                    return ("API密钥不能为空",)
+                    return ("API密钥不能为空，请输入密钥或从其他节点连接",)
             elif action == "clear":
-                success = config_manager.clear_api_key("glm")
+                # 修复硬编码问题，使用传入的model_type
+                success = config_manager.clear_api_key(model_type)
                 if success:
-                    return ("成功清除GLM API密钥",)
+                    return (f"成功清除{model_type.upper()} API密钥",)
                 else:
-                    return ("清除GLM API密钥失败",)
+                    return (f"清除{model_type.upper()} API密钥失败",)
             else:
                 return ("未知操作",)
         except Exception as e:
