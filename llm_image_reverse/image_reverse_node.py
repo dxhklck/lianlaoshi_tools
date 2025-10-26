@@ -63,7 +63,7 @@ class ImageToLLMReverseNode:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("result", "api_key")
     FUNCTION = "reverse_image"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/prompt/"
     OUTPUT_NODE = True
 
     def reverse_image(self, images, reverse_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, seed=0):
@@ -155,7 +155,7 @@ class LLMAPIKeyManager:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("status",)
     FUNCTION = "manage_api_key"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/prompt/"
 
     def manage_api_key(self, action, model_type="glm", api_key="", api_key_from_node=""):
         """

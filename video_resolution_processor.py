@@ -17,7 +17,7 @@ class LianVideoResolutionNode:
     RETURN_TYPES = ("INT", "INT",)
     RETURN_NAMES = ("输出宽度", "输出高度",)
     FUNCTION = "process"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/video"
 
     def process(self, 输入宽度, 输入高度, 最低分辨率):
         # 判断是否为竖屏

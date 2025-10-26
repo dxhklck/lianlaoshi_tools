@@ -18,7 +18,7 @@ class ImageTilingNode:
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "tile_images"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/image"
 
     def tile_images(self, images, rows, columns):
         # 获取图像批次大小

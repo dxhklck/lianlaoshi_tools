@@ -60,7 +60,7 @@ class PromptExpansionNode:
 
     RETURN_TYPES = ("STRING",)
     FUNCTION = "expand_prompt"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/prompt"
     OUTPUT_NODE = True
 
     def load_config(self):

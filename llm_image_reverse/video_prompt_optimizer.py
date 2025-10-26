@@ -67,7 +67,7 @@ class VideoPromptOptimizerNode:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("optimized_prompt", "api_key")
     FUNCTION = "run"
-    CATEGORY = "lianlaoshi"
+    CATEGORY = "lianlaoshi/prompt"
     OUTPUT_NODE = True
 
     def run(self, input_prompt, model_type, api_key, model_name="", temperature=0.7, max_tokens=2048, optimization_strength=1.0, optimization_type="video", seed=0):
