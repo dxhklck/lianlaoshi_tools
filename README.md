@@ -53,12 +53,45 @@
 - GLM API 密钥（需从智谱 AI 获取）
 
 ## 💾 安装方法
+
+### 基础安装
 1. 将此工具集文件夹放入 ComfyUI 的 `custom_nodes` 目录下
-2. 安装必要的依赖：
+2. 安装基础依赖：
    ```bash
    python -m pip install -r custom_nodes/lianlaoshi_tools/requirements.txt
    ```
 3. 重启 ComfyUI 或使用 Manager → Reload custom nodes
+
+### 分层安装选项
+
+#### 🎯 基础功能 (必需)
+```bash
+pip install torch>=2.0.0 numpy>=1.24.0 pillow>=10.0.0 requests>=2.31.0
+```
+
+#### 🎵 音频处理功能
+```bash
+pip install scipy>=1.7.0 scikit-learn>=1.0.0 torchaudio>=0.9.0 librosa>=0.9.0 soundfile>=0.10.0
+```
+
+#### 🎤 人声分离 (可选)
+```bash
+# 快速分离
+pip install speechbrain>=0.5.0
+```
+
+#### 🔧 完整安装 (推荐)
+```bash
+pip install -r custom_nodes/lianlaoshi_tools/requirements.txt
+```
+
+### 人声分离模型管理
+如需使用人声分离功能，可使用内置的模型管理器：
+```bash
+cd custom_nodes/lianlaoshi_tools/models
+python model_manager.py check      # 检查模型状态
+python model_manager.py download   # 下载所有模型
+```
 
 ## 🎯 节点详解
 

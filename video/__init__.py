@@ -1,0 +1,15 @@
+# Video processing nodes for lianlaoshi_tools
+
+import os
+from .video_combine_node import NODE_CLASS_MAPPINGS as VIDEO_COMBINE_MAPPINGS
+from .video_combine_node import NODE_DISPLAY_NAME_MAPPINGS as VIDEO_COMBINE_DISPLAY_MAPPINGS
+
+# 合并所有节点映射
+NODE_CLASS_MAPPINGS = {}
+NODE_DISPLAY_NAME_MAPPINGS = {}
+
+# 添加图片音频合成视频节点
+NODE_CLASS_MAPPINGS.update(VIDEO_COMBINE_MAPPINGS)
+NODE_DISPLAY_NAME_MAPPINGS.update(VIDEO_COMBINE_DISPLAY_MAPPINGS)
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
