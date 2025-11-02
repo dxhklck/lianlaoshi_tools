@@ -78,11 +78,11 @@ class AudioSplitNode:
                     "tooltip": "启用自适应阈值调整，根据音频特征动态调整静音检测阈值"
                 }),
                 "spectral_analysis": ("BOOLEAN", {
-                    "default": False,
+                    "default": True,
                     "tooltip": "启用频谱分析，在噪声环境下提供更准确的静音检测"
                 }),
                 "high_precision": ("BOOLEAN", {
-                    "default": False,
+                    "default": True,
                     "tooltip": "启用高精度模式，使用多频段分析提供最佳分割效果"
                 }),
             }
