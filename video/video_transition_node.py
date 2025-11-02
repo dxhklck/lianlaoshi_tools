@@ -39,13 +39,9 @@ class VideoTransitionNode:
         resized = F.interpolate(frame_nchw, size=(th, tw), mode="bilinear", align_corners=False)
         return resized.squeeze(0).permute(1, 2, 0)
 
-<<<<<<< HEAD
-    def _ensure_float(self, img: torch.Tensor) -> torch.Tensor:
-=======
     def _ensure_float(self, img: torch.Tensor | None) -> torch.Tensor | None:
         if img is None:
             return None
->>>>>>> f8d4735 (增加视频过度和文本随机提取)
         if img.dtype != torch.float32:
             return img.float()
         return img
@@ -67,15 +63,6 @@ class VideoTransitionNode:
         v1 = self._ensure_float(video1)
         v2 = self._ensure_float(video2)
 
-<<<<<<< HEAD
-        n1, h1, w1, c1 = v1.shape
-        n2, h2, w2, c2 = v2.shape
-        assert c1 == c2, "两个视频的通道数不一致"
-
-        # 输出分辨率：优先用传入尺寸，其次 video1；若 video1 为空则用 video2
-        out_w = target_width if target_width > 0 else (w1 if n1 > 0 else w2)
-        out_h = target_height if target_height > 0 else (h1 if n1 > 0 else h2)
-=======
         # 兼容 None 输入，安全获取形状与通道数
         if v1 is not None:
             n1, h1, w1, c1 = v1.shape
@@ -97,24 +84,15 @@ class VideoTransitionNode:
         base_h = h1 if n1 > 0 else (h2 if n2 > 0 else 1)
         out_w = target_width if target_width > 0 else base_w
         out_h = target_height if target_height > 0 else base_h
->>>>>>> f8d4735 (增加视频过度和文本随机提取)
 
         # 统一尺寸，兼容空序列
         v1_resized = (
             torch.stack([self._resize_frame(v1[i], (out_h, out_w)) for i in range(n1)], dim=0)
-<<<<<<< HEAD
-            if n1 > 0 else torch.empty((0, out_h, out_w, c1), dtype=v1.dtype, device=v1.device)
-        )
-        v2_resized = (
-            torch.stack([self._resize_frame(v2[i], (out_h, out_w)) for i in range(n2)], dim=0)
-            if n2 > 0 else torch.empty((0, out_h, out_w, c2), dtype=v2.dtype, device=v2.device)
-=======
             if n1 > 0 else torch.empty((0, out_h, out_w, c), dtype=torch.float32, device=(v1.device if v1 is not None else (v2.device if v2 is not None else "cpu")))
         )
         v2_resized = (
             torch.stack([self._resize_frame(v2[i], (out_h, out_w)) for i in range(n2)], dim=0)
             if n2 > 0 else torch.empty((0, out_h, out_w, c), dtype=torch.float32, device=(v2.device if v2 is not None else (v1.device if v1 is not None else "cpu")))
->>>>>>> f8d4735 (增加视频过度和文本随机提取)
         )
 
         # 任一输入为空：不进行 crossfade，直接拼接
@@ -159,13 +137,8 @@ class VideoTransitionNode:
 
         if length_mode == "overlap":
             # 原逻辑：减少总帧数
-<<<<<<< HEAD
-            prefix = v1_resized[:n1 - T] if n1 > T else torch.empty((0, out_h, out_w, c1), dtype=v1_resized.dtype, device=v1_resized.device)
-            suffix = v2_resized[T:] if n2 > T else torch.empty((0, out_h, out_w, c1), dtype=v2_resized.dtype, device=v2_resized.device)
-=======
             prefix = v1_resized[:n1 - T] if n1 > T else torch.empty((0, out_h, out_w, c), dtype=v1_resized.dtype, device=v1_resized.device)
             suffix = v2_resized[T:] if n2 > T else torch.empty((0, out_h, out_w, c), dtype=v2_resized.dtype, device=v2_resized.device)
->>>>>>> f8d4735 (增加视频过度和文本随机提取)
             output = torch.cat([prefix, transition_tensor, suffix], dim=0)
             return (output,)
         elif length_mode == "insert":
@@ -176,13 +149,8 @@ class VideoTransitionNode:
             # preserve_total：总帧数等于 n1 + n2
             K = T // 2          # 从 v1 尾部让出 K 帧
             R = T - K           # 从 v2 头部让出 R 帧
-<<<<<<< HEAD
-            prefix = v1_resized[:max(0, n1 - K)] if (n1 - K) > 0 else torch.empty((0, out_h, out_w, c1), dtype=v1_resized.dtype, device=v1_resized.device)
-            suffix = v2_resized[R:] if R < n2 else torch.empty((0, out_h, out_w, c1), dtype=v2_resized.dtype, device=v2_resized.device)
-=======
             prefix = v1_resized[:max(0, n1 - K)] if (n1 - K) > 0 else torch.empty((0, out_h, out_w, c), dtype=v1_resized.dtype, device=v1_resized.device)
             suffix = v2_resized[R:] if R < n2 else torch.empty((0, out_h, out_w, c), dtype=v2_resized.dtype, device=v2_resized.device)
->>>>>>> f8d4735 (增加视频过度和文本随机提取)
             output = torch.cat([prefix, transition_tensor, suffix], dim=0)
             return (output,)
 
