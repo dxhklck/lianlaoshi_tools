@@ -1,0 +1,16 @@
+# Python compiled artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+
+# Common tool caches (compiled/bytecode-like)
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build outputs (if any)
+build/
+dist/
+*.egg-info/
