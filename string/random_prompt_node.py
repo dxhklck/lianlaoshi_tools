@@ -19,7 +19,7 @@ class RandomPromptNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("string",)
     FUNCTION = "pick"
-    CATEGORY = "lianlaoshi/提示词"
+    CATEGORY = "lianlaoshi/prompt"
     DESCRIPTION = "从列表或多行文本中抽取一条提示词（支持 seed、指定来源与索引；只去空行，保留空格；可选去重）"
 
     def pick(self, multiline_text, dedup=True, source="auto", select_index=-1, strings_list=None, seed=-1):
