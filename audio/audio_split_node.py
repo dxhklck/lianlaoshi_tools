@@ -37,7 +37,7 @@ class AudioSplitNode:
                     "tooltip": "输入音频对象，包含波形数据和采样率"
                 }),
                 "split_duration": ("FLOAT", {
-                    "default": 5.0,
+                    "default": 3.0,
                     "min": 0.1,
                     "max": 600.0,
                     "step": 0.1,
@@ -440,7 +440,7 @@ class AudioEvenSplitNode:
                     "tooltip": "输入音频对象，包含波形数据和采样率"
                 }),
                 "segment_duration": ("FLOAT", {
-                    "default": 10.0,
+                    "default": 4.0,
                     "min": 0.1,
                     "max": 600.0,
                     "step": 0.1,

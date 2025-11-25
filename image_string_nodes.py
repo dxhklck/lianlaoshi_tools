@@ -36,9 +36,9 @@ class ImageStringBatch:
         return {
             "required": {
                 "image_1": ("IMAGE",),
-                "string_1": ("STRING", {"default": '', "forceInput": True}),
             },
             "optional": {
+                "string_1": ("STRING", {"default": '', "forceInput": True}),                
                 "image_2": ("IMAGE",),
                 "string_2": ("STRING", {"default": '', "forceInput": True}),
                 "image_3": ("IMAGE",),
@@ -62,9 +62,9 @@ class ImageStringBatch:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "INT", "INT")
-    RETURN_NAMES = ("images", "strings", "target_width", "target_height")
-    FUNCTION = "build"
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "strings")
+    FUNCTION = "combine""build"
     CATEGORY = "lianlaoshi/image"
     DESCRIPTION = (
         "Creates a batch of images paired with strings.\n"
@@ -72,7 +72,7 @@ class ImageStringBatch:
         "Optionally resizes all images to the specified width/height to avoid size mismatches."
     )
 
-    def build(self, image_1, string_1, **kwargs):
+    def build(self, image_1, string_1="", **kwargs):
         # Initialize batch with the first image and strings list
         images = image_1
         strings = []
@@ -158,13 +158,82 @@ class SelectImageString:
         selected_image = images[img_idx].unsqueeze(0)
         return (selected_image, selected_string)
 
+# 动态成对输入版本：支持根据 inputcount 动态添加 image_X 与 string_X
+class ImageStringBatchMulti:
+    @classmethod
+    def INPUT_TYPES(cls):
+        cls._inputcount = 4   # 默认至少4对
+        return {
+            "required": {
+                "inputcount":   ("INT", {"default": 4, "min": 1, "max": 20, "step": 1, "label": "Pairs (1~20)"}),
+                "target_width": ("INT", {"default": 832, "min": 64, "max": 2048, "step": 64}),
+                "target_height":("INT", {"default": 480, "min": 64, "max": 2048, "step": 64}),
+            },
+            "optional": {
+                "image_1": ("IMAGE", {"forceInput": True}),
+                "string_1": ("STRING", {"forceInput": True, "multiline": True}),
+            },
+            "hidden": { },
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "strings")
+    FUNCTION = "combine"
+    CATEGORY = "lianlaoshi/image"
+    DESCRIPTION = (
+        "批量接收圆点式图像与字符串列表，统一尺寸后输出。\n"
+        "用 update_inputs 按钮刷新前端显示。"
+    )
+
+    def combine(self, inputcount, target_width, target_height, **kwargs):
+        images = []
+        strings = []
+        device, dtype = None, None
+
+        # 按顺序收集 image_i / string_i
+        for i in range(1, inputcount + 1):
+            img = kwargs.get(f"image_{i}")
+            txt = kwargs.get(f"string_{i}", "")
+            if img is not None:
+                if device is None:
+                    device, dtype = img.device, img.dtype
+                if img.dim() == 3:
+                    img = img.unsqueeze(0)
+                # 统一尺寸
+                B, H, W, C = img.shape
+                if H != target_height or W != target_width:
+                    img = _resize_lanczos_nhwc(
+                        _center_crop_to_aspect_nhwc(img, target_height, target_width),
+                        target_height, target_width, dtype, device
+                    )
+                images.append(img)
+                # 字符串取第一个非空或空串
+                if isinstance(txt, list):
+                    txt = txt[0] if txt else ""
+                strings.append(str(txt))
+
+        # 缺图时给一张零图兜底
+        if not images:
+            images.append(torch.zeros((1, target_height, target_width, 3)))
+            strings.append("")
+
+        # 合并 batch
+        image_batch = torch.cat(images, dim=0)
+        # 补齐字符串数量
+        if len(strings) < image_batch.shape[0]:
+            strings += [""] * (image_batch.shape[0] - len(strings))
+
+        return (image_batch, strings)
+
 
 NODE_CLASS_MAPPINGS = {
     "ImageStringBatch": ImageStringBatch,
     "SelectImageString": SelectImageString,
+    "ImageStringBatchMulti": ImageStringBatchMulti,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageStringBatch": "lian 图像字符串批次构建",
     "SelectImageString": "lian 图像字符串选择",
+    "ImageStringBatchMulti": "lian 图像字符串批次构建·动态",
 }

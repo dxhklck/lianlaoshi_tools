@@ -73,10 +73,38 @@ class RandomPromptNode:
         return (rng.choice(candidates),)
 
 
+class MultiLineStringListNode:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {                
+                "multiline_text": ("STRING", {"default": "", "multiline": True, "placeholder": "输入多行文本，每行一个字符串"}),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("string_list",)
+    FUNCTION = "process"
+    CATEGORY = "lianlaoshi/string"
+    DESCRIPTION = "多行文本输入节点，自动去除空行，输出字符串列表供其他节点使用"
+
+    def process(self, multiline_text):
+        strings_list = []
+        if isinstance(multiline_text, str) and multiline_text:
+            # 分割行并去除空行和仅包含空白字符的行
+            lines = multiline_text.splitlines()
+            for line in lines:
+                stripped = line.strip()
+                if stripped:  # 只保留非空行
+                    strings_list.append(stripped)
+        return (strings_list,)
+
+
 NODE_CLASS_MAPPINGS = {
     "RandomPrompt": RandomPromptNode,
+    "MultiLineStringList": MultiLineStringListNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "RandomPrompt": "lian 随机提示词抽取",
+    "MultiLineStringList": "lian 多行文本转字符串列表",
 }
